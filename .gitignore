@@ -1,0 +1,14 @@
+# Documentation and notes
+change.md
+CLAUDE.md
+
+# Claude/AI config
+.config/
+
+# IDE
+.vscode/
+
+# Environment files
+.env
+.env.local
+.env*.local
