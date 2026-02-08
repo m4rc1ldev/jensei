@@ -1,40 +1,50 @@
 # Dashboard API Documentation
 
-## Authentication
+> **Status:** ✅ Production Ready
+> **Last Updated:** February 9, 2026
 
-All endpoints require JWT authentication. **Two methods supported:**
+---
 
-### Method 1: Bearer Token (Recommended for Dashboard)
+## 🔐 Authentication
 
-1. **Login to get token:**
-   ```bash
-   POST https://jensei.onrender.com/api/auth/login
-   Content-Type: application/json
+All dashboard endpoints require JWT authentication. **Two methods supported:**
 
-   {
-     "email": "doctor@example.com",
-     "password": "yourpassword"
-   }
-   ```
+### Method 1: Bearer Token (⭐ Recommended for Dashboard)
 
-   **Response:**
-   ```json
-   {
-     "message": "Login successful",
-     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-     "user": { ... }
-   }
-   ```
+**Step 1: Login to get token**
+```bash
+POST https://jensei.onrender.com/api/auth/login
+Content-Type: application/json
 
-2. **Use token in all requests:**
-   ```bash
-   GET https://jensei.onrender.com/api/appointments/doctor/:doctorId/statistics
-   Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-   ```
+{
+  "email": "doctor@example.com",
+  "password": "yourpassword"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "_id": "507f1f77bcf86cd799439011",
+    "name": "Dr. John Smith",
+    "email": "doctor@example.com",
+    "role": "doctor"
+  }
+}
+```
+
+**Step 2: Use token in all requests**
+```bash
+GET https://jensei.onrender.com/api/appointments/doctor/:doctorId/statistics
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
 
 ### Method 2: HTTP-Only Cookies (For Web Apps)
 
-Login sets a cookie automatically. Include `credentials: 'include'` in fetch requests.
+Login automatically sets a secure cookie. Include `credentials: 'include'` in fetch requests:
 
 ```javascript
 fetch('https://jensei.onrender.com/api/appointments/doctor/:id/statistics', {
@@ -42,30 +52,38 @@ fetch('https://jensei.onrender.com/api/appointments/doctor/:id/statistics', {
 })
 ```
 
-**Note:** For cross-domain requests, ensure your frontend domain is whitelisted in CORS.
+---
 
-## Base URL
-- Development: `http://localhost:3000/api`
-- Production: `https://api.jensei.com/api`
+## 🌐 Base URLs
+
+- **Production:** `https://jensei.onrender.com/api`
+- **Development:** `http://localhost:3000/api`
 
 ---
 
-## Appointment Management
+## 📋 Available Endpoints
 
 ### 1. Get Doctor's Appointments
-```
-GET /appointments/doctor/:doctorId
-```
+
+**Endpoint:** `GET /appointments/doctor/:doctorId`
+
+**Description:** Retrieve paginated list of appointments with filtering by status, date, or date range.
 
 **Query Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| status | string | Filter by status: `confirmed`, `completed`, `cancelled`, `no-show` |
-| date | string | Filter by specific date (YYYY-MM-DD) |
-| startDate | string | Start of date range (YYYY-MM-DD) |
-| endDate | string | End of date range (YYYY-MM-DD) |
-| page | number | Page number (default: 1) |
-| limit | number | Items per page (default: 10, max: 50) |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `status` | string | No | Filter by: `confirmed`, `completed`, `cancelled`, `no-show` |
+| `date` | string | No | Specific date (YYYY-MM-DD) |
+| `startDate` | string | No | Start of date range (YYYY-MM-DD) |
+| `endDate` | string | No | End of date range (YYYY-MM-DD) |
+| `page` | number | No | Page number (default: 1) |
+| `limit` | number | No | Items per page (default: 10, max: 50) |
+
+**Example:**
+```bash
+GET /api/appointments/doctor/507f1f77bcf86cd799439011?status=confirmed&page=1&limit=10
+Authorization: Bearer <token>
+```
 
 **Response:**
 ```json
@@ -73,17 +91,30 @@ GET /appointments/doctor/:doctorId
   "success": true,
   "data": [
     {
-      "_id": "...",
-      "userId": { "name": "John Doe", "email": "john@example.com", "phone": "..." },
-      "doctorId": "...",
-      "timeSlotId": { "date": "2025-01-15", "startTime": "10:00", "endTime": "10:30", "period": "Morning" },
+      "_id": "60d5ec49f1b2c72b8c8e4f1a",
+      "userId": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "phone": "+1234567890"
+      },
+      "doctorId": "507f1f77bcf86cd799439011",
+      "timeSlotId": {
+        "date": "2026-02-15T00:00:00.000Z",
+        "startTime": "10:00",
+        "endTime": "10:30",
+        "period": "Morning",
+        "bookingType": "video_call"
+      },
       "appointmentType": "video_call",
       "status": "confirmed",
-      "notes": "Patient notes",
+      "notes": "Patient notes here",
       "doctorNotes": "",
       "consultationFee": 500,
       "paymentStatus": "pending",
-      "createdAt": "..."
+      "completedAt": null,
+      "notesUpdatedAt": null,
+      "createdAt": "2026-02-08T10:30:00.000Z",
+      "updatedAt": "2026-02-08T10:30:00.000Z"
     }
   ],
   "pagination": {
@@ -95,80 +126,92 @@ GET /appointments/doctor/:doctorId
 }
 ```
 
+**Authorization:**
+- Doctor can only view their own appointments
+- Admin can view any doctor's appointments
+
 ---
 
 ### 2. Get Appointment Statistics
-```
-GET /appointments/doctor/:doctorId/statistics
-```
+
+**Endpoint:** `GET /appointments/doctor/:doctorId/statistics`
+
+**Description:** Get aggregated KPIs including counts, revenue, and appointment type breakdown.
 
 **Query Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| period | string | `today`, `week`, `month`, or `all` (default: `today`) |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `period` | string | No | `today`, `week`, `month`, or `all` (default: `today`) |
+
+**Example:**
+```bash
+GET /api/appointments/doctor/507f1f77bcf86cd799439011/statistics?period=week
+Authorization: Bearer <token>
+```
 
 **Response:**
 ```json
 {
   "success": true,
   "data": {
-    "period": "today",
+    "period": "week",
     "totalAppointments": 45,
     "todayCount": 8,
     "upcomingCount": 12,
-    "counts": {
-      "confirmed": 20,
-      "completed": 18,
-      "cancelled": 5,
-      "noShow": 2
-    },
     "confirmedCount": 20,
     "completedCount": 18,
     "cancelledCount": 5,
     "noShowCount": 2,
-    "revenue": 22500,
     "totalRevenue": 22500,
     "paidAppointments": 18,
-    "avgConsultationFee": 500,
+    "avgConsultationFee": 1250,
     "appointmentTypes": {
       "videoCall": 15,
       "voiceCall": 10,
       "clinicVisit": 20
     }
-  },
-  "counts": { "confirmed": 20, "completed": 18, "cancelled": 5, "noShow": 2 },
-  "appointmentTypes": { "videoCall": 15, "voiceCall": 10, "clinicVisit": 20 },
-  "revenue": 22500
+  }
 }
 ```
 
-**Notes:**
-- `counts`, `appointmentTypes`, and `revenue` are available both inside `data` and at the top level for convenience.
-- Flat count fields (`confirmedCount`, `completedCount`, etc.) inside `data` are kept for backward compatibility.
-- `data.revenue` and top-level `revenue` are the same numeric total.
+**Authorization:**
+- Doctor can only view their own statistics
+- Admin can view any doctor's statistics
 
 ---
 
 ### 3. Search Appointments by Patient
-```
-GET /appointments/doctor/:doctorId/search
-```
+
+**Endpoint:** `GET /appointments/doctor/:doctorId/search`
+
+**Description:** Search appointments by patient name or email (case-insensitive).
 
 **Query Parameters:**
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| query | string | Yes | Search term (matches patient name or email) |
-| page | number | No | Page number (default: 1) |
-| limit | number | No | Items per page (default: 10) |
+| `query` | string | ✅ Yes | Search term (matches name or email) |
+| `page` | number | No | Page number (default: 1) |
+| `limit` | number | No | Items per page (default: 10, max: 50) |
 
-**Response:** Same format as Get Doctor's Appointments.
+**Example:**
+```bash
+GET /api/appointments/doctor/507f1f77bcf86cd799439011/search?query=john
+Authorization: Bearer <token>
+```
+
+**Response:** Same format as "Get Doctor's Appointments"
+
+**Authorization:**
+- Doctor can only search their own appointments
+- Admin can search any doctor's appointments
 
 ---
 
 ### 4. Update Appointment Status
-```
-PATCH /appointments/:appointmentId/status
-```
+
+**Endpoint:** `PATCH /appointments/:appointmentId/status`
+
+**Description:** Update appointment status (confirmed → completed/no-show).
 
 **Request Body:**
 ```json
@@ -177,279 +220,293 @@ PATCH /appointments/:appointmentId/status
 }
 ```
 
-**Valid statuses:** `confirmed`, `completed`, `no-show`
+**Valid Status Values:**
+- `confirmed`
+- `completed`
+- `no-show`
 
-**Notes:**
-- Returns `404` if `appointmentId` is not a valid MongoDB ObjectId format.
-- Cannot update status of cancelled appointments
-- Only the appointment's doctor or admin can update status
-- Setting status to `completed` automatically sets `completedAt` timestamp
+**Example:**
+```bash
+PATCH /api/appointments/60d5ec49f1b2c72b8c8e4f1a/status
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "status": "completed"
+}
+```
 
 **Response:**
 ```json
 {
   "success": true,
   "message": "Appointment status updated successfully",
-  "data": { ... }
-}
-```
-
----
-
-### 5. Add Doctor Notes
-```
-PATCH /appointments/:appointmentId/notes
-```
-
-**Request Body:**
-```json
-{
-  "doctorNotes": "Patient responded well to treatment. Follow-up in 2 weeks."
+  "data": {
+    "_id": "60d5ec49f1b2c72b8c8e4f1a",
+    "status": "completed",
+    "completedAt": "2026-02-09T14:30:00.000Z",
+    ...
+  }
 }
 ```
 
 **Notes:**
-- Returns `404` if `appointmentId` is not a valid MongoDB ObjectId format.
-- Only the appointment's doctor or admin can add notes
-- Updates `notesUpdatedAt` timestamp automatically
+- Cannot update status of cancelled appointments
+- Setting status to `completed` automatically sets `completedAt` timestamp
+
+**Authorization:**
+- Only the appointment's doctor or admin can update status
+
+---
+
+### 5. Add/Update Doctor Notes
+
+**Endpoint:** `PATCH /appointments/:appointmentId/notes`
+
+**Description:** Add or update clinical notes for an appointment.
+
+**Request Body:**
+```json
+{
+  "doctorNotes": "Patient responded well to treatment. Prescribed medication XYZ. Follow-up in 2 weeks."
+}
+```
+
+**Example:**
+```bash
+PATCH /api/appointments/60d5ec49f1b2c72b8c8e4f1a/notes
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "doctorNotes": "Patient doing well, no complications."
+}
+```
 
 **Response:**
 ```json
 {
   "success": true,
   "message": "Doctor notes updated successfully",
-  "data": { ... }
-}
-```
-
----
-
-### 6. Get Single Appointment
-```
-GET /appointments/:appointmentId
-```
-
-**Notes:**
-- Returns `404` if `appointmentId` is not a valid MongoDB ObjectId format.
-
-**Response:**
-```json
-{
-  "success": true,
   "data": {
-    "_id": "...",
-    "userId": { "name": "...", "email": "...", "phone": "..." },
-    "doctorId": { "name": "...", "specialty": "...", "image": "..." },
-    "timeSlotId": { "date": "...", "startTime": "...", "endTime": "...", "period": "..." },
-    "appointmentType": "video_call",
-    "status": "confirmed",
-    "notes": "...",
-    "doctorNotes": "...",
-    "consultationFee": 500,
-    "paymentStatus": "pending",
-    "completedAt": null,
-    "notesUpdatedAt": null,
-    "createdAt": "...",
-    "updatedAt": "..."
+    "_id": "60d5ec49f1b2c72b8c8e4f1a",
+    "doctorNotes": "Patient doing well, no complications.",
+    "notesUpdatedAt": "2026-02-09T14:35:00.000Z",
+    ...
   }
 }
 ```
 
+**Authorization:**
+- Only the appointment's doctor or admin can add notes
+
 ---
 
-### 7. Cancel Appointment
-```
-PATCH /appointments/:appointmentId/cancel
-```
+### 6. Bulk Update Slot Status
+
+**Endpoint:** `PATCH /slots/:doctorId/bulk`
+
+**Description:** Update multiple time slots at once (mark as cancelled/available).
 
 **Request Body:**
 ```json
 {
-  "reason": "Patient requested cancellation",
-  "cancelledBy": "doctor"
-}
-```
-
-**Valid `cancelledBy` values:** `user`, `doctor`, `system`
-
-**Notes:**
-- Returns `404` if `appointmentId` is not a valid MongoDB ObjectId format.
-- Uses a MongoDB transaction to atomically cancel the appointment and free the associated time slot.
-
----
-
-## Slot Management
-
-### 8. Get Available Slots
-```
-GET /slots/:doctorId
-```
-
-**Authentication:** Not required (public endpoint).
-
-**Query Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| date | string | Date to check (YYYY-MM-DD, default: today) |
-| period | string | Filter by period: `Morning`, `Afternoon`, `Evening`, `Night` |
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "availableSlots": [
-      {
-        "_id": "...",
-        "doctorId": "...",
-        "date": "2025-02-10T00:00:00.000Z",
-        "startTime": "10:00",
-        "endTime": "10:30",
-        "period": "Morning",
-        "bookingType": null,
-        "status": "available"
-      }
-    ],
-    "isDoctorAvailable": true,
-    "unavailabilityReason": null,
-    "unavailabilityType": null,
-    "message": null
-  }
-}
-```
-
-**Notes:**
-- When the doctor is marked unavailable, `isDoctorAvailable` is `false` and `unavailabilityReason`/`unavailabilityType` describe why.
-- `availableSlots` only includes slots with `status: "available"` (booked/cancelled slots are excluded).
-
----
-
-### 9. Generate Slots (Admin)
-```
-POST /slots/:doctorId/generate
-```
-
-**Request Body:**
-```json
-{
-  "startDate": "2025-02-01",
-  "endDate": "2025-02-28"
-}
-```
-
-**Response (201 Created):**
-```json
-{
-  "success": true,
-  "slotsGenerated": 120,
-  "message": "Generated 120 slots for doctor 6988c31ad4b15a262132c8bb"
-}
-```
-
-**Notes:**
-- Returns `201 Created` on success (not 200).
-- Validates date format — returns `400` if dates are not valid `YYYY-MM-DD`.
-- Validates date range — returns `400` if `endDate` is before `startDate`.
-- Duplicate slots (same doctor + date + startTime) are silently skipped thanks to the unique index on TimeSlot.
-- Requires the doctor to have `DoctorSchedule` documents defining their weekly availability.
-
----
-
-### 10. Bulk Update Slots
-```
-PATCH /slots/:doctorId/bulk
-```
-
-**Request Body:**
-```json
-{
-  "slotIds": ["slot_id_1", "slot_id_2", "slot_id_3"],
+  "slotIds": [
+    "60d5ec49f1b2c72b8c8e4f1a",
+    "60d5ec49f1b2c72b8c8e4f1b",
+    "60d5ec49f1b2c72b8c8e4f1c"
+  ],
   "status": "cancelled"
 }
 ```
 
-**Valid statuses:** `available`, `cancelled`
+**Valid Status Values:**
+- `available`
+- `cancelled`
 
-**Notes:**
-- Cannot change booked slots to available (cancel the appointment first)
-- Booked slots are automatically excluded from bulk updates
-- Only the doctor or admin can perform bulk updates
+**Example:**
+```bash
+PATCH /api/slots/507f1f77bcf86cd799439011/bulk
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "slotIds": ["60d5ec49f1b2c72b8c8e4f1a", "60d5ec49f1b2c72b8c8e4f1b"],
+  "status": "cancelled"
+}
+```
 
 **Response:**
 ```json
 {
   "success": true,
-  "message": "3 slots updated successfully",
+  "message": "2 slots updated successfully",
   "data": {
-    "updatedCount": 3,
-    "totalRequested": 3
+    "updatedCount": 2,
+    "totalRequested": 2
   }
 }
 ```
 
----
+**Notes:**
+- Cannot change booked slots to available (must cancel appointment first)
+- Booked slots are automatically excluded from bulk updates
 
-### 11. Mark Doctor Unavailable
-```
-POST /slots/:doctorId/unavailable
-```
-
-**Request Body:**
-```json
-{
-  "startDate": "2025-02-15",
-  "endDate": "2025-02-17",
-  "reason": "Conference",
-  "type": "other",
-  "isRecurring": false
-}
-```
+**Authorization:**
+- Only the doctor or admin can bulk update slots
 
 ---
 
-### 12. Get Unavailability Periods
-```
-GET /slots/:doctorId/unavailable
-```
+## 📊 Response Format
 
-**Query Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| startDate | string | Start of range to check |
-| endDate | string | End of range to check |
-
----
-
-## Response Format
-
-### Success
+### Success Response
 ```json
 {
   "success": true,
   "data": { ... },
-  "pagination": { ... }
+  "message": "Optional success message",
+  "pagination": { ... }  // Only for list endpoints
 }
 ```
 
-### Error
+### Error Response
 ```json
 {
-  "error": "Error message here"
+  "error": "Descriptive error message"
 }
 ```
 
-## Status Codes
+---
+
+## 🚦 HTTP Status Codes
+
 | Code | Description |
 |------|-------------|
-| 200 | Success |
-| 201 | Created |
-| 400 | Bad Request (validation error) |
-| 401 | Unauthorized (missing/invalid token) |
-| 403 | Forbidden (insufficient permissions) |
-| 404 | Not Found |
-| 500 | Server Error |
+| `200` | Success |
+| `201` | Created |
+| `400` | Bad Request (validation error) |
+| `401` | Unauthorized (missing/invalid token) |
+| `403` | Forbidden (insufficient permissions) |
+| `404` | Not Found |
+| `500` | Server Error |
 
-## Authorization Rules
-- **Patient:** Can view/cancel their own appointments only
-- **Doctor:** Can view/update their own appointments, add notes, update status, manage slots
-- **Admin:** Full access to all endpoints
+---
+
+## 🔒 Authorization Rules
+
+| Role | Permissions |
+|------|-------------|
+| **Doctor** | View/update own appointments, statistics, and slots only |
+| **Admin** | Full access to all doctors' data |
+| **Patient** | Cannot access dashboard endpoints |
+
+---
+
+## 💡 Common Use Cases
+
+### 1. Dashboard Overview (KPIs)
+```bash
+# Get today's statistics
+GET /api/appointments/doctor/:doctorId/statistics?period=today
+```
+
+### 2. Upcoming Appointments
+```bash
+# Get confirmed appointments for today
+GET /api/appointments/doctor/:doctorId?status=confirmed
+```
+
+### 3. Complete Appointment Workflow
+```bash
+# 1. Mark as completed
+PATCH /api/appointments/:appointmentId/status
+{ "status": "completed" }
+
+# 2. Add clinical notes
+PATCH /api/appointments/:appointmentId/notes
+{ "doctorNotes": "Treatment successful" }
+```
+
+### 4. Find Patient's Appointments
+```bash
+# Search by patient name
+GET /api/appointments/doctor/:doctorId/search?query=john
+```
+
+### 5. Block Time Off
+```bash
+# Cancel multiple slots at once
+PATCH /api/slots/:doctorId/bulk
+{ "slotIds": [...], "status": "cancelled" }
+```
+
+---
+
+## 🧪 Testing with Postman/Thunder Client
+
+### 1. Login & Get Token
+```
+POST {{baseUrl}}/auth/login
+Body (JSON):
+{
+  "email": "your-doctor@email.com",
+  "password": "yourpassword"
+}
+
+Save the token from response
+```
+
+### 2. Test Statistics Endpoint
+```
+GET {{baseUrl}}/appointments/doctor/{{doctorId}}/statistics?period=week
+Headers:
+  Authorization: Bearer {{token}}
+```
+
+### 3. Test Update Status
+```
+PATCH {{baseUrl}}/appointments/{{appointmentId}}/status
+Headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+Body:
+{
+  "status": "completed"
+}
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### 401 Unauthorized
+- **Cause:** Invalid or expired token
+- **Solution:** Login again to get a fresh token
+
+### 403 Forbidden
+- **Cause:** Trying to access another doctor's data
+- **Solution:** Use the correct `doctorId` that matches your authenticated user
+
+### 400 Bad Request
+- **Cause:** Missing required fields or invalid values
+- **Solution:** Check request body matches the documentation
+
+### 404 Not Found
+- **Cause:** Invalid appointment ID or doctor ID
+- **Solution:** Verify the IDs exist in the database
+
+---
+
+## 📞 Support
+
+For issues or questions about these APIs:
+- Check error message in response
+- Verify authentication token is valid
+- Ensure correct `doctorId` is being used
+- Contact backend team: [Your contact info]
+
+---
+
+**Version:** 1.0
+**Last Tested:** February 9, 2026
+**Environment:** Production (Render)
