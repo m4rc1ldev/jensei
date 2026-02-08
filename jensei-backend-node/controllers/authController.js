@@ -156,12 +156,12 @@ export const verifyOTP = async (req, res) => {
     // Generate token
     const token = generateToken(user._id, user.email, user.role);
 
-    // Set HTTP-only cookie for web clients
+    // Set HTTP-only cookie for web clients (cross-domain compatible)
     const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('token', token, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
+      secure: true, // Always true for cross-domain cookies
+      sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-domain in production
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -265,12 +265,12 @@ export const login = async (req, res) => {
     // Generate token
     const token = generateToken(user._id, user.email, user.role);
 
-    // Set HTTP-only cookie for web clients
+    // Set HTTP-only cookie for web clients (cross-domain compatible)
     const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('token', token, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
+      secure: true, // Always true for cross-domain cookies
+      sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-domain in production
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 

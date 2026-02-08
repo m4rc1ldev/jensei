@@ -1,11 +1,48 @@
 # Dashboard API Documentation
 
 ## Authentication
-All endpoints require JWT authentication via Bearer token or HTTP-only cookie.
 
+All endpoints require JWT authentication. **Two methods supported:**
+
+### Method 1: Bearer Token (Recommended for Dashboard)
+
+1. **Login to get token:**
+   ```bash
+   POST https://jensei.onrender.com/api/auth/login
+   Content-Type: application/json
+
+   {
+     "email": "doctor@example.com",
+     "password": "yourpassword"
+   }
+   ```
+
+   **Response:**
+   ```json
+   {
+     "message": "Login successful",
+     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+     "user": { ... }
+   }
+   ```
+
+2. **Use token in all requests:**
+   ```bash
+   GET https://jensei.onrender.com/api/appointments/doctor/:doctorId/statistics
+   Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   ```
+
+### Method 2: HTTP-Only Cookies (For Web Apps)
+
+Login sets a cookie automatically. Include `credentials: 'include'` in fetch requests.
+
+```javascript
+fetch('https://jensei.onrender.com/api/appointments/doctor/:id/statistics', {
+  credentials: 'include'
+})
 ```
-Authorization: Bearer <token>
-```
+
+**Note:** For cross-domain requests, ensure your frontend domain is whitelisted in CORS.
 
 ## Base URL
 - Development: `http://localhost:3000/api`

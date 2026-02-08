@@ -37,25 +37,28 @@ const getAllowedOrigins = () => {
   
   if (isProduction) {
     // PRODUCTION: Only allow production frontend URLs
-    // Support both www and non-www versions, and both http and https
+    // TODO: When custom domain is ready, update to:
+    //   - Frontend: https://jensei.com (Vercel)
+    //   - Backend: https://api.jensei.com (Render)
+    //   - Then change sameSite back to 'lax' in authController.js
     const productionUrls = [
       'https://www.jensei.com',
       'https://jensei.com',
-      // Note: http versions removed for security (HTTPS only in production)
+      'https://jensei-rose.vercel.app', // Vercel deployment (temporary)
     ];
-    
+
     origins.push(...productionUrls);
-    
+
     // Also add from FRONTEND_URL env variable if set
     if (process.env.FRONTEND_URL) {
       const frontendUrl = process.env.FRONTEND_URL.replace(/\/$/, ''); // Remove trailing slash
-      
+
       // Only add HTTPS URLs in production
       if (frontendUrl.startsWith('https://')) {
         origins.push(frontendUrl);
-        
-        // Add www/non-www variants
-        if (frontendUrl.includes('jensei.com')) {
+
+        // Add www/non-www variants for jensei.com
+        if (frontendUrl.includes('jensei.com') && !frontendUrl.includes('vercel')) {
           if (frontendUrl.includes('www.')) {
             origins.push(frontendUrl.replace('www.', ''));
           } else {
