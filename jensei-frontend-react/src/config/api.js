@@ -10,26 +10,20 @@ const getApiUrl = () => {
     return import.meta.env.VITE_API_URL.replace(/\/$/, ""); // Remove trailing slash
   }
 
-  // 2. Auto-detect production environment
-  // Vercel sets VERCEL=1 and provides VERCEL_URL
-  if (import.meta.env.VERCEL || import.meta.env.PROD) {
-    return "https://api.jensei.com";
-  }
-
-  // 3. Default to localhost for development
+  // 2. Default to localhost for development
   return "http://localhost:3000";
 };
 
 export const API_URL = getApiUrl();
 
 const getChatApiUrl = () => {
-  // 2. Auto-detect production environment
-  // Vercel sets VERCEL=1 and provides VERCEL_URL
-  if (import.meta.env.VERCEL || import.meta.env.PROD) {
-    return "https://api.jensei.com/chat/api";
+  // Use VITE_API_URL for chat endpoints too
+  if (import.meta.env.VITE_API_URL) {
+    const baseUrl = import.meta.env.VITE_API_URL.replace(/\/$/, "");
+    return `${baseUrl}/chat/api`;
   }
 
-  // 3. Default to localhost for development
+  // Default to localhost for development
   return "http://localhost:8000";
 };
 
